@@ -1,4 +1,4 @@
-TITLE:: MonoM
+CLASS:: MonoM
 summary:: Inteface for monome grids
 categories:: Monome
 related:: Classes/Arc, Classes/ArcEncoder, Classes/ArcRotary
@@ -47,7 +47,7 @@ column or y in cartesian coordinates
 ARGUMENT:: row
 row or x in cartesian coordinates
 
-ARGUMENT:: noff
+ARGUMENT:: state
 on or off: 0-1
 
 METHOD:: levset
@@ -65,7 +65,7 @@ led intensity 0-15
 METHOD:: ledall
 set all leds on or off
 
-ARGUMENT:: noff
+ARGUMENT:: state
 0: off or 1: on
 
 METHOD:: levall
@@ -77,10 +77,10 @@ intensity level 0-15
 METHOD:: ledrow
 set a row in a quad in a single message
 
-ARGUMENT:: exoff
+ARGUMENT:: xOffset
 x offset
 
-ARGUMENT:: why
+ARGUMENT:: y
 y offset
 
 ARGUMENT:: bit1
@@ -134,10 +134,10 @@ NOTE:: Offsets must be mutliples of 8. Offsets for monome 64 should always be ze
 METHOD:: ledcol
 Set a column in a quad in a single message.
 
-ARGUMENT:: ex
+ARGUMENT:: x
 x offset
 
-ARGUMENT:: whyoff
+ARGUMENT:: yOffset
 y offset
 
 ARGUMENT:: bit1
@@ -178,14 +178,14 @@ NOTE:: Offsets must be mutliples of 8. Offsets for monome64 should always be zer
 METHOD:: levrow
 Set a row in a quad in a single message with variable brightness.
 
-ARGUMENT:: exoff
+ARGUMENT:: xOffset
 x offset
 
-ARGUMENT:: why
+ARGUMENT:: y
 y offset
 
-ARGUMENT:: larr
-16 length integer array of values between 0 and 15
+ARGUMENT:: levArray
+16 length integer array of level values between 0 and 15
 
 CODE::
 (
@@ -200,14 +200,14 @@ CODE::
 METHOD:: levcol
 Set a column in a quad in a single message with variable brightness.
 
-ARGUMENT:: ex
+ARGUMENT:: x
 x offset
 
-ARGUMENT:: whyoff
+ARGUMENT:: yOffset
 y offset
 
-ARGUMENT:: larr
-16 length integer array of values between 0 and 15
+ARGUMENT:: levArray
+16 length integer array of level values between 0 and 15
 
 CODE::
 (
@@ -222,13 +222,13 @@ CODE::
 METHOD:: ledmap
 set a quad (8×8, 64 buttons) in a single message
 
-ARGUMENT:: exoff
+ARGUMENT:: xOffset
 x offset
 
-ARGUMENT:: whyoff
+ARGUMENT:: yOffset
 y offset
 
-ARGUMENT:: larr
+ARGUMENT:: levArray
 64 length array
 
 DISCUSSION::
@@ -249,13 +249,13 @@ NOTE:: Offsets must be multiples of 8.
 METHOD:: levmap
 set a quad (8×8, 64 buttons) in a single message with variable brightness
 
-ARGUMENT:: exoff
+ARGUMENT:: xOffset
 x offset
 
-ARGUMENT:: whyoff
+ARGUMENT:: yOffset
 y offset
 
-ARGUMENT:: larr
+ARGUMENT:: levArray
 64 length array
 
 METHOD:: printOn
@@ -271,8 +271,8 @@ ARGUMENT:: portnum
 METHOD:: intensity
 global intensity for entire grid
 
-ARGUMENT:: shitisintensyo
-intensitity level 0-15
+ARGUMENT:: globalIntensity
+intensity level 0-15
 
 METHOD:: useDevice
 choose which device to use in the device list
@@ -283,10 +283,10 @@ device list index, begins at 0
 METHOD:: tiltnoff
 set active state of tilt sensor on (device) n to (state) s
 
-ARGUMENT:: sens
+ARGUMENT:: device
 nth device: to receive tilt for
 
-ARGUMENT:: noff
+ARGUMENT:: state
 0 or 1
 
 METHOD:: darkness
