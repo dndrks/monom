@@ -4,15 +4,14 @@ for information about monome devices:
 monome.org
 
 written by:
-raja das
-https://github.com/Karaokaze
+raja das, ezra buchla, dan derks
 
 */
 
 MonoM {
 
-    classvar seroscnet, discovery, <>rows, <>columns, <>portlst;
-    var <>prefix, <>rot, <>dvcnum, oscout;
+    classvar seroscnet, discovery, <>rows, <>columns, <>portlst, quadDirty, ledQuads, redrawTimer;
+	var <>prefix, <>rot, <>dvcnum, oscout;
 
     *initClass {
 
@@ -58,6 +57,31 @@ MonoM {
     init { arg prefix_, rot_;
         prefix = prefix_;
         rot = rot_;
+		quadDirty = Array.fill(8,{0});
+		ledQuads = Array.fill(8,{Array.fill(64,{0})});
+		redrawTimer = Routine({
+			var interval = 1/60, offsets = [[0,0],[8,0],[0,8],[8,8]];
+			loop {
+				for (0, 3, {
+					arg i;
+					if(quadDirty[i] != 0,
+						{
+							oscout.sendMsg(
+								prefix++"/grid/led/level/map",
+								offsets[i][0],
+								offsets[i][1],
+								*ledQuads[i]
+							);
+							quadDirty[i] = 0;
+						}
+					);
+					interval.yield;
+				});
+			}
+		});
+
+		redrawTimer.play();
+
     }
 
     deviceList {
@@ -73,6 +97,8 @@ MonoM {
         dvcnum = devicenum;
         oscout = NetAddr.new("localhost", portlst[devicenum].value);
         Post << "Using device on port#" << portlst[devicenum].value << Char.nl;
+
+		oscout.sendMsg(prefix++"/grid/led/all", 0);
 
         oscout.sendMsg("/sys/port", NetAddr.localAddr.port);
         oscout.sendMsg("/sys/prefix", prefix);
@@ -102,61 +128,82 @@ MonoM {
     }
 
     // See here: http://monome.org/docs/tech:osc
-    // if you need further explanation of the led methods below
-    ledset	{ arg col, row, noff;
-        if ((noff == 0) or: (noff == 1)) {
-            oscout.sendMsg(prefix++"/grid/led/set", col, row, noff);
+    // if you need further explanation of the LED methods below
+    ledset	{ arg col, row, state;
+        if ((state == 0) or: (state == 1)) {
+            oscout.sendMsg(prefix++"/grid/led/set", col, row, state);
         } {
-            "invalid argument (noff must be 0 or 1).".warn;
+            "invalid argument (state must be 0 or 1).".warn;
         };
     }
 
-    ledall 	{ arg noff;
-        if ((noff == 1) or: (noff == 0)) {
-            oscout.sendMsg(prefix++"/grid/led/all", noff);
+    ledall 	{ arg state;
+        if ((state == 1) or: (state == 0)) {
+            oscout.sendMsg(prefix++"/grid/led/all", state);
         } {
-            "invalid argument (noff must be 0 or 1)".warn;
+            "invalid argument (state must be 0 or 1)".warn;
         };
     }
 
-    ledmap	{ arg exoff, whyoff, larr;
-        oscout.sendMsg(prefix++"/grid/led/map", exoff, whyoff, *larr);
+    ledmap	{ arg xOffset, yOffset, levArray;
+        oscout.sendMsg(prefix++"/grid/led/map", xOffset, yOffset, *levArray);
     }
 
-    ledrow	{ arg exoff, why, bit1, bit2;
-        oscout.sendMsg(prefix++"/grid/led/row", exoff, why, bit1, bit2);
+    ledrow	{ arg xOffset, y, bit1, bit2;
+        oscout.sendMsg(prefix++"/grid/led/row", xOffset, y, bit1, bit2);
     }
 
-    ledcol	{ arg ex, whyoff, bit1, bit2;
-        oscout.sendMsg(prefix++"/grid/led/col", ex, whyoff, bit1, bit2);
+    ledcol	{ arg x, yOffset, bit1, bit2;
+        oscout.sendMsg(prefix++"/grid/led/col", x, yOffset, bit1, bit2);
     }
 
-    intensity	{ arg shitisintensyo;
-        oscout.sendMsg(prefix++"/grid/led/intensity", shitisintensyo);
+    intensity	{ arg globalIntensity;
+        oscout.sendMsg(prefix++"/grid/led/intensity", globalIntensity);
     }
 
     levset	{ arg col, row, lev;
-        oscout.sendMsg(prefix++"/grid/led/level/set", col, row, lev);
+		var x = col, y = row, offset;
+		case
+		{(x < 8) && (y < 8)} {
+			offset = (8*y)+x;
+			ledQuads[0][offset] = lev;
+			quadDirty[0] = 1;
+		}
+		{(x > 7) && (x < 16) && (y < 8)} {
+			offset = (8*y)+(x-8);
+			ledQuads[1][offset] = lev;
+			quadDirty[1] = 1;
+		}
+		{(x < 8) && (y > 7) && (y < 16)} {
+			offset = (8*(y-8))+x;
+			ledQuads[2][offset] = lev;
+			quadDirty[2] = 1;
+		}
+		{(x > 7) && (x < 16) && (y > 7) && (y < 16)} {
+			offset = (8*(y-8))+(x-8);
+			ledQuads[3][offset] = lev;
+			quadDirty[3] = 1;
+		}
     }
 
     levall	{ arg lev;
         oscout.sendMsg(prefix++"/grid/led/level/all", lev);
     }
 
-    levmap	{ arg exoff, whyoff, larr;
-        oscout.sendMsg(prefix++"/grid/led/level/map", exoff, whyoff, *larr);
+    levmap	{ arg xOffset, yOffset, levArray;
+        oscout.sendMsg(prefix++"/grid/led/level/map", xOffset, yOffset, *levArray);
     }
 
-    levrow	{ arg exoff, why, larr;
-        oscout.sendMsg(prefix++"/grid/led/level/row", exoff, why,*larr);
+    levrow	{ arg xOffset, y, levArray;
+        oscout.sendMsg(prefix++"/grid/led/level/row", xOffset, y, *levArray);
     }
 
-    levcol	{ arg ex, whyoff, larr;
-        oscout.sendMsg(prefix++"/grid/led/level/col", ex, whyoff,*larr);
+    levcol	{ arg x, yOffset, levArray;
+        oscout.sendMsg(prefix++"/grid/led/level/col", x, yOffset, *levArray);
     }
 
-    tiltnoff { arg sens, noff;
-        oscout.sendMsg(prefix++"/tilt/set", sens, noff);
+    tiltnoff { arg sens, state;
+        oscout.sendMsg(prefix++"/tilt/set", sens, state);
     }
 
     darkness {
@@ -165,5 +212,5 @@ MonoM {
         oscout.disconnect;
         seroscnet.disconnect;
     }
-}
 
+}
