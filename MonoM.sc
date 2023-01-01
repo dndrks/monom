@@ -202,8 +202,8 @@ MonoM {
         oscout.sendMsg(prefix++"/grid/led/level/col", x, yOffset, *levArray);
     }
 
-    tiltnoff { arg device, state;
-        oscout.sendMsg(prefix++"/tilt/set", device, state);
+    tiltnoff { arg sens, state;
+        oscout.sendMsg(prefix++"/tilt/set", sens, state);
     }
 
     darkness {
