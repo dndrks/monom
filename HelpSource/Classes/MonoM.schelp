@@ -298,16 +298,16 @@ METHOD:: prefix
 RETURNS:: device prefix
 
 METHOD:: dvcnum
-RETURNS:: index of device in device list
+RETURNS:: index of device in device list (0-indexed)
 
 METHOD:: rot
 RETURNS:: rotation of device (cable orientation): 0, 90, 180, 270
 
 METHOD:: rws
-returns:: number of rows a grid device has
+returns:: number of rows a grid device has (1-indexed)
 
 METHOD:: cls
-RETURNS:: number of columns
+RETURNS:: number of columns a grid device has (1-indexed)
 
 METHOD:: prt
 RETURNS:: port the device is currently communicating on
