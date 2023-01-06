@@ -53,6 +53,12 @@ MonoM {
     }
 
     *new { arg prefix, rot;
+		var rotTranslate = [0,90,180,270];
+
+		rot = case
+		{rot <= 3} {rotTranslate[rot]}
+		{rot > 3} {rot};
+
         ^ super.new.init(prefix, rot);
     }
 
@@ -127,17 +133,40 @@ MonoM {
         oscout.sendMsg("/sys/rotation", rot);
     }
 
-    prt {
+	port {
         ^portlst[dvcnum];
     }
 
-    rws {
+    rows {
         ^rows[dvcnum];
     }
 
+    cols {
+        ^columns[dvcnum];
+    }
+
+	// deprecated:
+    prt {
+        ^portlst[dvcnum];
+    }
+	// deprecated:
+    rws {
+        ^rows[dvcnum];
+    }
+	// deprecated:
     cls {
         ^columns[dvcnum];
     }
+
+	key { arg func;
+		OSCFunc.newMatching(
+			{ arg message, time, addr, recvPort;
+				var x = message[1], y = message[2], z = message[3];
+				func.value(x,y,z);
+			},
+			prefix++"/grid/key"
+		);
+	}
 
     // See here: http://monome.org/docs/tech:osc
     // if you need further explanation of the LED methods below
@@ -149,6 +178,7 @@ MonoM {
         };
     }
 
+	// deprecated
     ledall 	{ arg state;
         if ((state == 1) or: (state == 0)) {
             oscout.sendMsg(prefix++"/grid/led/all", state);
@@ -173,61 +203,73 @@ MonoM {
         oscout.sendMsg(prefix++"/grid/led/intensity", globalIntensity);
     }
 
-    levset	{ arg col, row, lev;
-		var x = col, y = row, offset;
+	led { arg x,y,val;
+		var offset;
 		case
 		// 64: quad01 (top left)
 		{(x < 8) && (y < 8)} {
 			offset = (8*y)+x;
-			ledQuads[0][offset] = lev;
+			ledQuads[0][offset] = val;
 			quadDirty[0] = 1;
 		}
 		// 128: quad 1 (top right)
 		{(x > 7) && (x < 16) && (y < 8)} {
 			offset = (8*y)+(x-8);
-			ledQuads[1][offset] = lev;
+			ledQuads[1][offset] = val;
 			quadDirty[1] = 1;
 		}
 		// 256: quad 2 (bottom left)
 		{(x < 8) && (y > 7) && (y < 16)} {
 			offset = (8*(y-8))+x;
-			ledQuads[2][offset] = lev;
+			ledQuads[2][offset] = val;
 			quadDirty[2] = 1;
 		}
 		// 256: quad 3 (bottom right)
 		{(x > 7) && (x < 16) && (y > 7) && (y < 16)} {
 			offset = (8*(y-8))+(x-8);
-			ledQuads[3][offset] = lev;
+			ledQuads[3][offset] = val;
 			quadDirty[3] = 1;
 		}
 		// 512: quad 4 (top mid-right)
 		{(x > 15) && (x < 24) && (y < 8)} {
 			offset = (8*y)+(x-16);
-			ledQuads[4][offset] = lev;
+			ledQuads[4][offset] = val;
 			quadDirty[4] = 1;
 		}
 		// 512: quad 5 (top far right)
 		{(x > 23) && (x < 32) && (y < 8)} {
 			offset = (8*y)+(x-24);
-			ledQuads[5][offset] = lev;
+			ledQuads[5][offset] = val;
 			quadDirty[5] = 1;
 		}
 		// 512: quad 6 (bottom mid-right)
 		{(x > 15) && (x < 24) && (y > 7) && (y < 16)} {
 			offset = (8*(y-8))+(x-16);
-			ledQuads[6][offset] = lev;
+			ledQuads[6][offset] = val;
 			quadDirty[6] = 1;
 		}
 		// 512: quad 7 (bottom far right)
 		{(x > 23) && (x < 32) && (y > 7) && (y < 16)} {
 			offset = (8*(y-8))+(x-24);
-			ledQuads[7][offset] = lev;
+			ledQuads[7][offset] = val;
 			quadDirty[7] = 1;
 		}
+	}
+
+	// deprecated
+	levset	{ arg col, row, lev;
+		this.led(col,row,lev);
+		'.levset is deprecated, use .led'.postln;
     }
 
+	all { arg val;
+		oscout.sendMsg(prefix++"/grid/led/level/all", val);
+	}
+
+	// deprecated
     levall	{ arg lev;
-        oscout.sendMsg(prefix++"/grid/led/level/all", lev);
+		this.all(lev);
+		'.levall is deprecated, use .all'.postln;
     }
 
     levmap	{ arg xOffset, yOffset, levArray;
@@ -242,8 +284,14 @@ MonoM {
         oscout.sendMsg(prefix++"/grid/led/level/col", x, yOffset, *levArray);
     }
 
+	tilt_enable { arg device, state;
+		oscout.sendMsg(prefix++"/tilt/set", device, state);
+    }
+
+	// deprecated
     tiltnoff { arg device, state;
-        oscout.sendMsg(prefix++"/tilt/set", device, state);
+		this.tilt_enable(device, state);
+		'.tiltnoff is deprecated, use .tilt_enable'.postln;
     }
 
     darkness {

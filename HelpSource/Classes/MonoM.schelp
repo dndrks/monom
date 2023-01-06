@@ -24,7 +24,9 @@ ARGUMENT:: prefix
 message prefix to communicate with serialosc
 
 ARGUMENT:: rot
-cable orientation: left = 0˚, down = 90˚, right = 180˚, up = 270˚
+cable orientation: left = 0, down = 1, right = 2, up = 3
+
+(also accepts 0, 90, 180, and 270 degrees)
 
 PRIVATE:: portlst
 
@@ -38,41 +40,77 @@ INSTANCEMETHODS::
 
 PRIVATE:: init
 
-METHOD:: ledset
-set an individual led on or off
+METHOD:: useDevice
+choose which device to use in the device list
 
-ARGUMENT:: col
-column or y in cartesian coordinates
+ARGUMENT:: devicenum
+device list index, begins at 0
 
-ARGUMENT:: row
-row or x in cartesian coordinates
+METHOD:: key
+assign a function to interpret key presses
 
-ARGUMENT:: state
-on or off: 0-1
+ARGUMENT:: func
+function which receives key x/y coordinates and z state
 
-METHOD:: levset
-set an individual led to a variable brightness
+code::
+// make sure to clear any running grid code before executing
+(
+~m = MonoM.new("/monome", 0);
 
-ARGUMENT:: col
-column or y in cartesian coordinates
+s.waitForBoot({
 
-ARGUMENT:: row
-row or x in cartesian coordinates
+	~m.useDevice(0);
+	~m.key({ arg x,y,z;
+		case
+		{z == 1} {('('++x++','++y++') | key down').postln}
+		{z == 0} {('('++x++','++y++') | key up').postln};
+	});
 
-ARGUMENT:: lev
-led intensity 0-15
+});
+)
+::
 
-METHOD:: ledall
-set all leds on or off
+METHOD:: led
 
-ARGUMENT:: state
-0: off or 1: on
+ARGUMENT:: x
+x in cartesian coordinates
 
-METHOD:: levall
+ARGUMENT:: y
+y in cartesian coordinates
+
+ARGUMENT:: val
+brightness level value 0-15
+
+code::
+// make sure to clear any running grid code before executing
+(
+~m = MonoM.new("/monome", 0);
+
+s.waitForBoot({
+
+	~m.useDevice(0);
+
+	~m.key({ arg x,y,z;
+		~m.led(x,y,z * 15);
+	});
+
+});
+)
+::
+
+METHOD:: intensity
+global intensity for entire grid
+
+ARGUMENT:: globalIntensity
+intensity level 0-15
+
+METHOD:: all
 set all leds to a variable brightness
 
 ARGUMENT:: lev
-intensity level 0-15
+brightness level 0-15
+
+
 
 METHOD:: ledrow
 set a row in a quad in a single message
@@ -120,9 +158,7 @@ code::
 
 	~sixtyFour.ledrow(0, 0, 15);
 
-	when considering wider resolution grids, two bytes (32 bits) are used instead of a one byte
-	message (16 bits)
-	*/
+	//when considering wider resolution grids, two bytes (32 bits) are used instead of a one byte message (16 bits)
 	~twoFiftySix.ledrow(0, 0, 255, 255);
 	~twoFiftySix.ledrow(8, 5, 255);
 
@@ -268,19 +304,7 @@ use a specific port for device communication
 
 ARGUMENT:: portnum
 
-METHOD:: intensity
-global intensity for entire grid
-
-ARGUMENT:: globalIntensity
-intensity level 0-15
-
-METHOD:: useDevice
-choose which device to use in the device list
-
-ARGUMENT:: devicenum
-device list index, begins at 0
-
-METHOD:: tiltnoff
+METHOD:: tilt_enable
 set active state of tilt sensor on (device) n to (state) s
 
 ARGUMENT:: device
